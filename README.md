@@ -27,8 +27,7 @@ cd p2pTcp
 
 Below is a basic example demonstrating how to set up a simple TCP server using the p2pTcp library:
 
-# Server Example
-Below is a basic example demonstrating how to set up a simple TCP server using the p2pTcp library:
+### Server Example
 
 ```python
 from p2pTcp.transport import TcpTransport
