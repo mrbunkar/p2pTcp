@@ -35,17 +35,17 @@ class TcpTransport:
         """
         Handle upcoming connection and will provide TcpPeer object. 
         """
-        peer = TcpPeer(reader, writer)
+        peer = TcpPeer(reader, writer, self)
         logging.info(f"Connected to PEER: {writer.get_extra_info('peername')}")
         try:
-            await self.opts.hand_shake(peer)
-            await self.opts.on_peer(peer)
+            self.opts.hand_shake(peer)
+            self.opts.on_peer(peer)
         except Exception as e:
             logging.error(f"Error handling connection from {writer.get_extra_info('peername')}: {e}")
             peer.close()
             return
         
-        await peer.read()
+        asyncio.create_task(peer.read())
 
     async def make_connection(self, host, port):
         try:
@@ -60,6 +60,4 @@ class TcpTransport:
         logging.info(f"Server running on port: {self.host}:{self.port} is closed")
 
     async def consume(self):
-        return self.rpc_queue.get()
-
-    
+        return await self.rpc_queue.get()

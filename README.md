@@ -40,3 +40,7 @@ if __name__ == "__main__":
     )
     asyncio.run(server.listen())
 ```
+
+## API Documentation
+The core components include TcpTransport, TcpPeer and TcpOpts.
+

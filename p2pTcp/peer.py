@@ -16,7 +16,6 @@ class WaitGroup:
             self.counter += count
 
     async def done(self):
-        
         async with self.lock:
             self.counter -= 1
             if self.counter == 0:
@@ -41,25 +40,37 @@ class TcpPeer:
         self.transport = transport
         self.addr = self.writer.get_extra_info("peername")
 
-    async def write(self, data: io.BytesIO):
+    async def writeMessage(self, message: RPC):
+        data = message.serialize()
+        err = await Encoder.encode(self, data)
+
+        if err is not None:
+            logging.error(f"Failed to write message to [{self.addr}]")
+            return
+       
+        logging.info(f"Message send to peer: [{self.addr}]")
+        return
+
+
+    async def writeStream(self, data: io.BytesIO):
         pass
 
     async def read(self):
         while True:
-            rpc = RPC()
-            err = await Encoder.decode(self,rpc)
+            
+            rpc, err = await Encoder.decode(self)
 
             if isinstance(err, EOFError):
-                logging.info(f"Connection closed by peer: {self.addr}")
+                logging.info(f"Connection closed by peer: [{self.addr}]")
                 break
 
             if err is not None:
                 logging.error(f"Error decoding message from:[{self.addr}], error:{err}")
                 continue
 
-            rpc.From = self.addr
+            rpc.From = self.addr 
             await self.transport.rpc_queue.put(rpc)
-            
+
             if rpc.Stream:
                 await self.wg.add(1)
                 logging.info("Incoming stream, waiting for the stream to process")
@@ -68,15 +79,23 @@ class TcpPeer:
                 continue
 
     async def read_stream(self, expected_length) -> io.BytesIO:
-        stream_data = io.BytesIO()
-        while expected_length > 0:
-            chunk = await self.reader.read(min(1024, expected_length))
-            if not chunk:
-                break
-            stream_data.write(chunk)
-            expected_length -= len(chunk)
-        stream_data.seek(0)
-        return stream_data
+
+        """
+        Given the length of the stream, will read the data and release the 
+        lock if stream is done
+        """
+        try:
+            stream_data = io.BytesIO()
+            while expected_length > 0:
+                chunk = await self.reader.read(min(1024, expected_length))
+                if not chunk:
+                    break
+                stream_data.write(chunk)
+                expected_length -= len(chunk)
+            stream_data.seek(0)
+            return stream_data
+        finally:
+            self.wg.done()
 
     def close(self):
         self.writer.close()
