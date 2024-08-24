@@ -55,9 +55,14 @@ class TcpTransport:
             return ConnectionError(f"Failed to connect to {self.host}:{self.port}")
 
     async def close(self):
-        self.server.close()
-        await self.server.wait_closed()
-        logging.info(f"Server running on port: {self.host}:{self.port} is closed")
+        print("Closing the server")
+        try:
+            self.server.close()
+            # await self.server.wait_closed()
+            # @TODO: gracefully shutdown
+            logging.info(f"Server running on port: {self.host}:{self.port} is closed")
+        except Exception as err:
+            raise Exception
 
     async def consume(self):
         return await self.rpc_queue.get()

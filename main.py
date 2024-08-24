@@ -24,19 +24,36 @@ async def run_server2():
 
     for addr,peer in peers.items():
         rpc = RPC(
-            Payload= b"testing the stream messages",
-            Type = MessageType,
+            Payload= b"Upcoming stream",
+            Type = IncomingStream,
+            Size = 28
         )
-        # data = io.BytesIO(b"testing the stream messages")
+        
         await peer.writeMessage(rpc)
+        data = io.BytesIO(b"Testing the contnouse stream")
         print(f"Message sent to {addr}")
+        await asyncio.sleep(0.5)
+        await peer.writeStream(data)
+        print("Stream send over the network")
+
+    await server.close()
 
 async def _loop(server):
     await asyncio.sleep(3)
     while True:
         print("Waiting for RPC")
         rpc = await server.consume()
-        print(f"Received message: {rpc.Payload.decode()}")
+        print(f"Received message: {rpc.Payload.decode()}, {rpc.Size}")
+        
+        if rpc.Type == IncomingStream:
+            peer = rpc.Peer
+            print(peer)
+            data = await peer.read_stream(rpc.Size)
+            print(data.getvalue().decode())
+        await asyncio.sleep(1)
+        print(1)
+        await server.close()
+        break
 
 async def run(server: TcpTransport):
 

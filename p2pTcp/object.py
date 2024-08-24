@@ -1,5 +1,10 @@
 from abc import ABC, abstractmethod
 
+"""
+Templates for handshake and OnPeer classes. User can decide how they want to
+handle handshake and on peer.
+"""
+
 class Handshake(ABC):
 
     @abstractmethod

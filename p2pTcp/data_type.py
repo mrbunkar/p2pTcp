@@ -26,7 +26,7 @@ class RPC:
         self.Type = Type
         self.Size = Size
 
-    def serialize(self) -> io.BytesIO:
+    def serialize(self):
         """
         Converts the RPC object into a bytes stream for sending over the network.
         The format will be: Payload\r\nType\r\nSize (if it's a stream)
@@ -34,9 +34,9 @@ class RPC:
         raw_data = self.Payload + b"\r\n" + self.Type
         
         if self.Type == IncomingStream:
-            raw_data += b"\r\n" + self.Size.to_bytes(4, byteorder='big')  # Assuming Size is a 4-byte integer
+            raw_data += b"\r\n" + str(self.Size).encode('utf-8')  # Assuming Size is a 4-byte integer
 
-        return io.BytesIO(raw_data)
+        return raw_data
 
     @classmethod
     def deserialize(cls, data: bytes):
@@ -56,6 +56,7 @@ class RPC:
         if type_ == IncomingStream:
             if len(parts) < 3:
                 raise ValueError("Invalid data format for stream RPC deserialization")
-            size = int.from_bytes(parts[2], byteorder='big')
+            size_str = parts[2].decode('utf-8')
+            size = int(size_str)
 
         return cls(Payload=payload, Type=type_, Size=size)

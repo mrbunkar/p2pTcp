@@ -53,7 +53,21 @@ class TcpPeer:
 
 
     async def writeStream(self, data: io.BytesIO):
-        pass
+
+        while True:
+            chunk = data.read(1024)
+
+            if not chunk:
+                break
+            err = await Encoder.encode(self, chunk)
+
+            if err is not None:
+                logging.error(f"Failed to write stream to [{self.addr}]")
+                return
+       
+        logging.info(f"Stream send to peer: [{self.addr}]")
+        return
+
 
     async def read(self):
         while True:
@@ -95,7 +109,7 @@ class TcpPeer:
             stream_data.seek(0)
             return stream_data
         finally:
-            self.wg.done()
+            await self.wg.done()
 
     def close(self):
         self.writer.close()

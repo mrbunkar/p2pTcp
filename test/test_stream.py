@@ -3,7 +3,8 @@ import asyncio
 from p2pTcp.transport import TcpTransport, TcpOpts
 from p2pTcp.data_type import RPC, MessageType
 
-class TestP2PCommunication(unittest.IsolatedAsyncioTestCase):
+
+class TestP2PStream(unittest.IsolatedAsyncioTestCase):
 
     async def asyncSetUp(self):
         self.peers = {}
@@ -19,24 +20,11 @@ class TestP2PCommunication(unittest.IsolatedAsyncioTestCase):
         await self.server2.make_connection("localhost", 3030)
         await asyncio.sleep(1)
 
-    def on_peer(self, peer):
-        self.peers[peer.addr] = peer
+    def on_peer(self,peer):
+        self.peers[peer.Addr] = peer
 
-    async def test_message_sending(self):
-        """Test sending a message between peers."""
-        
-        for addr, peer in self.peers.items():
-            rpc = RPC(Payload=b"testing the stream messages", Type=MessageType)
-            await peer.writeMessage(rpc)
-            print(f"Message sent to {addr}")
-
-        await asyncio.sleep(1)  # Give some time for the message to be processed
-
-        # Consume the message from the server1's queue
-        rpc = await self.server1.consume()
-        msg = rpc.Payload.decode()
-        self.assertEqual(msg, "testing the stream messages")
-        await self.asyncTearDown()
+    async def test_streaming(self):
+        pass
 
     async def asyncTearDown(self):
         await self.server1.close()

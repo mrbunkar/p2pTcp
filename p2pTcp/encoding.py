@@ -4,10 +4,10 @@ from p2pTcp.data_type import RPC, Message, IncomingStream
 import json
 
 class Encoder:
-    async def encode(peer, data: io.BytesIO):
+    async def encode(peer, data: bytes):
         
         try:
-            peer.writer.write(data.getvalue()) 
+            peer.writer.write(data) 
             await peer.writer.drain()
             return None
         except Exception as err:
